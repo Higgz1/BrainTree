@@ -1,0 +1,7 @@
+{
+  "name": "BrainTree",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
