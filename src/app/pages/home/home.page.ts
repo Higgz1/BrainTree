@@ -15,7 +15,7 @@ declare const paypal;
 export class HomePage implements OnInit {
 
 
-  constructor(public loadingController: LoadingController,private tokenService: TokenService, private checkoutService: CheckoutService) { }
+  constructor(public loadingController: LoadingController, private tokenService: TokenService, private checkoutService: CheckoutService) { }
 
   ngOnInit() {
     this.getToken();
@@ -27,20 +27,39 @@ export class HomePage implements OnInit {
       message: 'Please wait...',
     });
     await loading.present();
+    var purchase = document.querySelector('#purchase');
 
-    this.tokenService.getToken().subscribe((token:any) => {
+    this.tokenService.getToken().subscribe((token: any) => {
       console.log(token.clientToken);
 
       braintree.dropin.create({
         authorization: token.clientToken,
         container: document.getElementById('dropin-container'),
-      });
-      loading.dismiss();
+        //example paypla integration
+        paypal: {
+          flow: 'checkout',
+          amount: '10.00',
+          currency: 'USD'
+        }
+      }).then((dropinInstance)=>{
+        loading.dismiss();
+        // purchase.addEventListener('click',()=>{
+        //   dropinInstance.requestPaymentMethod().then((payload)=> {
+        //     console.log('payload',payload)
+        //   }).catch(function (err) {
+        //     // Handle errors in requesting payment method
+        //   });
+
+        // });
+
+      })
+
+
+
+
     })
-
-
-
-
   }
+
+  makePayments(){}
 
 }
