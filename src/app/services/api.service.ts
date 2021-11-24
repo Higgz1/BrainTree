@@ -28,4 +28,9 @@ export class ApiService {
     // const headers = new HttpHeaders().set('Authorization', 'Bearer ' + this.token);
     return this.http.get(this.url + '/' + endpoint,{ params });
   }
+
+  post(endpoint: string, body: any, reqOpts?: any) {
+		// const headers = new HttpHeaders().set('Authorization', 'Bearer ' + this.token);
+		return this.http.post(this.url + '/' + endpoint, body);
+	}
 }
