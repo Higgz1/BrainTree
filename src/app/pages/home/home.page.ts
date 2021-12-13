@@ -14,11 +14,10 @@ declare const paypal;
 
 export class HomePage implements OnInit {
 
-
-  constructor(public loadingController: LoadingController, private tokenService: TokenService, private checkoutService: CheckoutService) { }
+  constructor(public loadingController: LoadingController, private tokenService: TokenService, private checkoutService: CheckoutService) { this.getToken(); }
 
   ngOnInit() {
-    this.getToken();
+    (document.getElementById('purchase') as any).style.visibility = 'hidden';
   }
 
   async getToken() {
@@ -40,17 +39,67 @@ export class HomePage implements OnInit {
           flow: 'checkout',
           amount: '10.00',
           currency: 'USD'
-        }
-      }).then((dropinInstance)=>{
-        loading.dismiss();
-        // purchase.addEventListener('click',()=>{
-        //   dropinInstance.requestPaymentMethod().then((payload)=> {
-        //     console.log('payload',payload)
-        //   }).catch(function (err) {
-        //     // Handle errors in requesting payment method
-        //   });
+        },
+        card: {
+          // overrides: {
+          //   fields: {
+          //     number: {
+          //       placeholder: '1111 1111 1111 1111' // Update the number field placeholder
+          //     },
+          //     postalCode: {
+          //       minlength: 5 // Set the minimum length of the postal code field
+          //     },
+          //     cvv: {
+          //       maskInput: true
+          //     } // Remove the CVV field from your form
+          //   },
+          //   styles: {
+          //     input: {
+          //       'font-size': '18px' // Change the font size for all inputs
+          //     },
+          //     ':focus': {
+          //       color: 'black' // Change the focus color to red for all inputs
+          //     }
+          //   }
+          // }
+        },
+        onPaymentMethodReceived: (obj) => {
+          // console.log("nonce  " + obj.nonce);
+          // this.ckeckoutClick(obj.nonce)  
+          this.send();
+        },
 
-        // });
+      }).then((dropinInstance) => {
+        loading.dismiss();
+
+
+        dropinInstance.on('changeActiveView', function (event) {
+          
+          if (event.newViewId == 'options') {
+            (document.getElementById('purchase') as any).style.visibility = 'hidden';
+
+            // (document.getElementById('#purchase') ).disabled = false;
+          }
+          else if (event.newViewId == 'paypal') {
+            (document.getElementById('purchase') as any).style.visibility = 'hidden';
+
+          }
+          else if (event.newViewId == 'card') {
+            // this.Displayed != this.Displayed ;
+            (document.getElementById('purchase') as any).style.visibility = 'visible';
+
+
+          }
+        });
+
+        purchase.addEventListener('click', () => {
+          dropinInstance.requestPaymentMethod().then((payload) => {
+            console.log('payload', payload)
+          }).catch(function (err) {
+            // Handle errors in requesting payment method
+          });
+          console.log("click event");
+        });
 
       })
 
@@ -60,6 +109,8 @@ export class HomePage implements OnInit {
     })
   }
 
-  makePayments(){}
+  send(){
+    console.log("oh yeah!")
+  }
 
 }
