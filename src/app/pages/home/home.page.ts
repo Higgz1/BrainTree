@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { LoadingController } from '@ionic/angular';
+import { LoadingController, ToastController } from '@ionic/angular';
 import { CheckoutService } from 'src/app/services/Checkout/checkout.service';
 import { TokenService } from 'src/app/services/Token/token.service';
 
@@ -14,6 +14,7 @@ declare const paypal;
 export class HomePage implements OnInit {
   constructor(
     public loadingController: LoadingController,
+    public toastController: ToastController,
     private tokenService: TokenService,
     private checkoutService: CheckoutService
   ) {
@@ -46,6 +47,9 @@ export class HomePage implements OnInit {
             flow: 'checkout',
             amount: '10.00',
             currency: 'USD',
+            onSuccess: (nonce) => {
+              console.log('nonce', nonce);
+            },
           },
           card: {
             // overrides: {
@@ -99,7 +103,7 @@ export class HomePage implements OnInit {
               .requestPaymentMethod()
               .then((payload) => {
                 // console.log('payload', payload.nonce);
-                this.handleBraintreePayment(payload.nonce);
+                this.handleBraintreePayment(payload.nonce, dropinInstance);
               })
               .catch((err) => {
                 // Handle errors in requesting payment method
@@ -110,17 +114,45 @@ export class HomePage implements OnInit {
     });
   }
 
-  send() {
-    console.log('oh yeah!');
+  handleBraintreePayment(nonce, dropinInstance) {
+    //to simulate success or fail Change amount
+    // see https://developer.paypal.com/braintree/docs/guides/credit-cards/testing-go-live
+
+    const payableAmount = '100';
+    const allValues = Object.assign({ payableAmount }, { nonce });
+    (document.getElementById('purchase') as any).disabled = true;
+
+    this.checkoutService.checkOut(allValues).subscribe((resp: any) => {
+      console.log(resp);
+      if (resp.success === true) {
+        this.successfulToast();
+        dropinInstance.teardown((teardownErr) => {
+          if (teardownErr) {
+            console.error('Could not tear down Drop-in UI!');
+          } else {
+            (document.getElementById('purchase') as any).remove();
+          }
+        });
+      } else if(resp.success === false){
+        this.errorToast();
+        (document.getElementById('purchase') as any).disabled = false;
+      }
+    });
   }
 
-  handleBraintreePayment(nonce) {
-    const payableAmount = '10';
-    const allValues = Object.assign({payableAmount},{nonce});
-
-    this.checkoutService.checkOut(allValues).subscribe((resp: any)=>{
-    console.log(resp);
-
+  async successfulToast() {
+    const toast = await this.toastController.create({
+      message: 'Transaction Successfull',
+      duration: 3000,
     });
+    toast.present();
+  }
+
+  async errorToast() {
+    const toast = await this.toastController.create({
+      message: 'Transaction Failed',
+      duration: 3000,
+    });
+    toast.present();
   }
 }
