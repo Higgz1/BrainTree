@@ -9,8 +9,9 @@ export class CheckoutService {
 
   constructor(private apiService: ApiService) { }
 
-  checkOut(){
-    return this.apiService.get('checkoutBrain');
+  checkOut(allValues){
+    console.log('values',allValues);
+    return this.apiService.post('checkoutBrain',allValues);
 
   }
 
