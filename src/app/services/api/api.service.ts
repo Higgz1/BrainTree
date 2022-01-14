@@ -7,7 +7,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 })
 export class ApiService {
 
-  url = 'http://localhost:5001/gopaintfunctions/europe-west3';
+  url = 'https://europe-west3-gopaintfunctions.cloudfunctions.net';
 
   constructor(private http: HttpClient) {}
 

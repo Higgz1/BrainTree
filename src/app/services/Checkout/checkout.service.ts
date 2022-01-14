@@ -11,7 +11,7 @@ export class CheckoutService {
 
   checkOut(allValues){
     console.log('values',allValues);
-    return this.apiService.post('checkoutBrain',allValues);
+    return this.apiService.post('checkoutBraintree',allValues);
 
   }
 

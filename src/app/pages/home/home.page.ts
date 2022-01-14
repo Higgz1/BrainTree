@@ -4,8 +4,6 @@ import { CheckoutService } from 'src/app/services/Checkout/checkout.service';
 import { TokenService } from 'src/app/services/Token/token.service';
 
 declare const braintree;
-declare const client;
-declare const paypal;
 @Component({
   selector: 'app-home',
   templateUrl: './home.page.html',
@@ -42,7 +40,7 @@ export class HomePage implements OnInit {
         .create({
           authorization: clientToken,
           container: document.getElementById('dropin-container'),
-          //example paypla integration
+          //example paypal integration
           paypal: {
             flow: 'checkout',
             amount: '10.00',
@@ -74,10 +72,6 @@ export class HomePage implements OnInit {
             //   }
             // }
           },
-          // onPaymentMethodReceived: function (obj) {
-          //   console.log(obj.nonce);
-          //   console.log('Root');
-          // }
         })
         .then((dropinInstance) => {
           loading.dismiss();
@@ -95,6 +89,18 @@ export class HomePage implements OnInit {
               // this.Displayed != this.Displayed ;
               (document.getElementById('purchase') as any).style.visibility =
                 'visible';
+            }
+          });
+
+          dropinInstance.on('paymentMethodRequestable', (event) => {
+            console.log('paypal event', event);
+            if (
+              event.paymentMethodIsSelected === true &&
+              event.type === 'PayPalAccount'
+            ) {
+              dropinInstance.requestPaymentMethod().then((payload) => {
+                this.handleBraintreePayment(payload.nonce, dropinInstance);
+              });
             }
           });
 
@@ -133,7 +139,7 @@ export class HomePage implements OnInit {
             (document.getElementById('purchase') as any).remove();
           }
         });
-      } else if(resp.success === false){
+      } else if (resp.success === false) {
         this.errorToast();
         (document.getElementById('purchase') as any).disabled = false;
       }
