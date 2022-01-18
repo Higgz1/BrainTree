@@ -26,7 +26,7 @@ export class HomePage implements OnInit {
 
   async getToken() {
     const loading = await this.loadingController.create({
-      spinner: 'circles',
+      spinner: 'crescent',
       message: 'Please wait...',
     });
     await loading.present();
