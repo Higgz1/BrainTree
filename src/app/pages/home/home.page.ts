@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { LoadingController, ToastController } from '@ionic/angular';
 import { CheckoutService } from 'src/app/services/Checkout/checkout.service';
 import { TokenService } from 'src/app/services/Token/token.service';
@@ -14,13 +15,14 @@ export class HomePage implements OnInit {
     public loadingController: LoadingController,
     public toastController: ToastController,
     private tokenService: TokenService,
-    private checkoutService: CheckoutService
+    private checkoutService: CheckoutService,
+    private router: Router,
   ) {
-    this.getToken();
     // this.handleBraintreePayment('any');
   }
 
   ngOnInit() {
+    this.getToken();
     (document.getElementById('purchase') as any).style.visibility = 'hidden';
   }
 
@@ -120,9 +122,15 @@ export class HomePage implements OnInit {
     });
   }
 
-  handleBraintreePayment(nonce, dropinInstance) {
+  async handleBraintreePayment(nonce, dropinInstance) {
     //to simulate success or fail Change amount
     // see https://developer.paypal.com/braintree/docs/guides/credit-cards/testing-go-live
+
+    const loading = await this.loadingController.create({
+      spinner: 'crescent',
+      message: 'Please wait...',
+    });
+    await loading.present();
 
     const payableAmount = '100';
     const allValues = Object.assign({ payableAmount }, { nonce });
@@ -135,12 +143,16 @@ export class HomePage implements OnInit {
         dropinInstance.teardown((teardownErr) => {
           if (teardownErr) {
             console.error('Could not tear down Drop-in UI!');
+            loading.dismiss();
           } else {
             (document.getElementById('purchase') as any).remove();
+            loading.dismiss();
+            this.router.navigate(['/payments-recieved',{ paymentDetails: JSON.stringify(resp.transaction) }]);
           }
         });
       } else if (resp.success === false) {
         this.errorToast();
+        loading.dismiss();
         (document.getElementById('purchase') as any).disabled = false;
       }
     });

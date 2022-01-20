@@ -1,0 +1,38 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button>
+        <ion-back-button></ion-back-button>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Payments</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <ion-card *ngIf='paymentDetails.creditCard.cardType !== null'>
+    <ion-card-header>
+      <ion-card-title>Payments Successfully Received</ion-card-title>
+      <ion-card-subtitle>Payment Type:<span class="icon"><ion-img class="payment-icon" [src]="paymentDetails.creditCard.imageUrl" alt=""></ion-img></span></ion-card-subtitle>
+      <ion-card-subtitle>Amount Paid: <span style="font-weight: 700;">{{paymentDetails.amount}} {{paymentDetails.currencyIsoCode}}</span></ion-card-subtitle>
+      <ion-card-subtitle>For Card: <span style="font-weight: 700;">{{paymentDetails.creditCard.maskedNumber}}</span></ion-card-subtitle>
+      <ion-card-subtitle>Date: <span style="font-weight: 700;">{{paymentDetails.createdAt | date}}</span></ion-card-subtitle>
+
+
+    </ion-card-header>
+  </ion-card>
+
+  <ion-card *ngIf='paymentDetails.paypal'>
+    <ion-card-header>
+      <ion-card-title>Payments Successfully Received</ion-card-title>
+      <ion-card-subtitle>Payment Type:<span class="icon"><ion-img class="payment-icon" [src]="paymentDetails.paypal.imageUrl" alt=""></ion-img></span></ion-card-subtitle>
+      <ion-card-subtitle>Amount Paid: <span style="font-weight: 700;">{{paymentDetails.amount}} {{paymentDetails.currencyIsoCode}}</span></ion-card-subtitle>
+      <ion-card-subtitle>From Email: <span style="font-weight: 700;">{{paymentDetails.paypal.payerEmail}}</span></ion-card-subtitle>
+      <ion-card-subtitle>Date: <span style="font-weight: 700;">{{paymentDetails.createdAt | date}}</span></ion-card-subtitle>
+
+
+    </ion-card-header>
+  </ion-card>
+
+</ion-content>
