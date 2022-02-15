@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { LoadingController, ToastController } from '@ionic/angular';
 import { CheckoutService } from 'src/app/services/Checkout/checkout.service';
 import { TokenService } from 'src/app/services/Token/token.service';
+import { v4 as uuidv4 } from 'uuid';
 
 declare const braintree;
 @Component({
@@ -11,19 +12,30 @@ declare const braintree;
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
+  paintProduct: { id: any; productName: string; price: string };
   constructor(
     public loadingController: LoadingController,
     public toastController: ToastController,
     private tokenService: TokenService,
     private checkoutService: CheckoutService,
-    private router: Router,
+    private router: Router
   ) {
     // this.handleBraintreePayment('any');
   }
 
   ngOnInit() {
+    // get token first thing when page loads
     this.getToken();
+
+    // Hide purchase button on page load
     (document.getElementById('purchase') as any).style.visibility = 'hidden';
+
+    // Random product
+    this.paintProduct = {
+      id: uuidv4(),
+      productName: 'Stummy Beige',
+      price: Math.floor(Math.random() * 100).toString(),
+    };
   }
 
   async getToken() {
@@ -45,7 +57,7 @@ export class HomePage implements OnInit {
           //example paypal integration
           paypal: {
             flow: 'checkout',
-            amount: '10.00',
+            amount: this.paintProduct.price,
             currency: 'USD',
             onSuccess: (nonce) => {
               console.log('nonce', nonce);
@@ -94,6 +106,7 @@ export class HomePage implements OnInit {
             }
           });
 
+          // Paypal payment logic
           dropinInstance.on('paymentMethodRequestable', (event) => {
             console.log('paypal event', event);
             if (
@@ -101,17 +114,20 @@ export class HomePage implements OnInit {
               event.type === 'PayPalAccount'
             ) {
               dropinInstance.requestPaymentMethod().then((payload) => {
-                this.handleBraintreePayment(payload.nonce, dropinInstance);
+                console.log('payload', payload);
+
+                this.handleBraintreePayment(payload, dropinInstance);
               });
             }
           });
 
+          // card payment logic
           purchase.addEventListener('click', () => {
             dropinInstance
               .requestPaymentMethod()
               .then((payload) => {
-                // console.log('payload', payload.nonce);
-                this.handleBraintreePayment(payload.nonce, dropinInstance);
+                console.log('payload', payload);
+                this.handleBraintreePayment(payload, dropinInstance);
               })
               .catch((err) => {
                 // Handle errors in requesting payment method
@@ -122,7 +138,7 @@ export class HomePage implements OnInit {
     });
   }
 
-  async handleBraintreePayment(nonce, dropinInstance) {
+  async handleBraintreePayment(payload, dropinInstance) {
     //to simulate success or fail Change amount
     // see https://developer.paypal.com/braintree/docs/guides/credit-cards/testing-go-live
 
@@ -132,10 +148,23 @@ export class HomePage implements OnInit {
     });
     await loading.present();
 
-    const payableAmount = '100';
-    const allValues = Object.assign({ payableAmount }, { nonce });
+    // Creating the object to send to the server
+    const payableAmount = this.paintProduct.price;
+    const nonce = payload.nonce;
+    const billing = payload.details;
+    const type = payload.type;
+    const allValues = Object.assign(
+      { payableAmount },
+      { nonce },
+      { billing },
+      { type }
+    );
+    console.log('allV', allValues);
+
+    // Disable the purchase button when sending to server
     (document.getElementById('purchase') as any).disabled = true;
 
+    // Actual function that receives allValues Object created to send to server
     this.checkoutService.checkOut(allValues).subscribe((resp: any) => {
       console.log(resp);
       if (resp.success === true) {
@@ -147,7 +176,10 @@ export class HomePage implements OnInit {
           } else {
             (document.getElementById('purchase') as any).remove();
             loading.dismiss();
-            this.router.navigate(['/payments-recieved',{ paymentDetails: JSON.stringify(resp.transaction) }]);
+            this.router.navigate([
+              '/payments-recieved',
+              { paymentDetails: JSON.stringify(resp.transaction) },
+            ]);
           }
         });
       } else if (resp.success === false) {
