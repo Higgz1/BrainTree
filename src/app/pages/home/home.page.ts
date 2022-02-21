@@ -1,7 +1,9 @@
+/* eslint-disable max-len */
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { LoadingController, ToastController } from '@ionic/angular';
 import { CheckoutService } from 'src/app/services/Checkout/checkout.service';
+import { ProductsService } from 'src/app/services/product/products.service';
 import { TokenService } from 'src/app/services/Token/token.service';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -12,30 +14,32 @@ declare const braintree;
   styleUrls: ['./home.page.scss'],
 })
 export class HomePage implements OnInit {
-  paintProduct: { id: any; productName: string; price: string };
+  totalCart: any;
+  products: any;
+  cart: {
+    id: any;
+    productName: any;
+    price: any;
+    quantity: number;
+    itemTotal: number;
+  }[];
+
   constructor(
     public loadingController: LoadingController,
     public toastController: ToastController,
     private tokenService: TokenService,
+    private productService: ProductsService,
     private checkoutService: CheckoutService,
     private router: Router
   ) {
     // this.handleBraintreePayment('any');
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     // get token first thing when page loads
-    this.getToken();
-
+    await this.getProducts();
     // Hide purchase button on page load
     (document.getElementById('purchase') as any).style.visibility = 'hidden';
-
-    // Random product
-    this.paintProduct = {
-      id: uuidv4(),
-      productName: 'Stummy Beige',
-      price: Math.floor(Math.random() * 100).toString(),
-    };
   }
 
   async getToken() {
@@ -45,10 +49,12 @@ export class HomePage implements OnInit {
     });
     await loading.present();
     const purchase = document.querySelector('#purchase');
+    // this.getProducts();
 
     this.tokenService.getToken().subscribe((token: any) => {
       // console.log(token.clientToken);
       const clientToken = token.clientToken;
+
 
       braintree.dropin
         .create({
@@ -57,7 +63,7 @@ export class HomePage implements OnInit {
           //example paypal integration
           paypal: {
             flow: 'checkout',
-            amount: this.paintProduct.price,
+            amount: this.totalCart,
             currency: 'USD',
             onSuccess: (nonce) => {
               console.log('nonce', nonce);
@@ -149,15 +155,17 @@ export class HomePage implements OnInit {
     await loading.present();
 
     // Creating the object to send to the server
-    const payableAmount = this.paintProduct.price;
+    const payableAmount = this.totalCart;
     const nonce = payload.nonce;
     const billing = payload.details;
     const type = payload.type;
+    const products = this.cart;
     const allValues = Object.assign(
       { payableAmount },
       { nonce },
       { billing },
-      { type }
+      { type },
+      { products }
     );
     console.log('allV', allValues);
 
@@ -204,5 +212,44 @@ export class HomePage implements OnInit {
       duration: 3000,
     });
     toast.present();
+  }
+
+  getProducts() {
+    this.productService.getProducts().subscribe((products) => {
+      this.products = products;
+      console.log('dummy products', this.products);
+
+      // Random products
+      this.cart = [
+        {
+          id: this.products[0].id,
+          productName: this.products[0].title,
+          price: this.products[0].price,
+          quantity: 2,
+          itemTotal: this.products[0].price * 2,
+        },
+        {
+          id: this.products[1].id,
+          productName: this.products[1].title,
+          price: this.products[1].price,
+          quantity: 6,
+          itemTotal: this.products[1].price * 5,
+        },
+        {
+          id: this.products[2].id,
+          productName: this.products[2].title,
+          price: this.products[2].price,
+          quantity: 3,
+          itemTotal: this.products[2].price * 3,
+        },
+      ];
+
+      this.totalCart = this.cart
+        .map((item) => item.itemTotal)
+        .reduce((a, b) => a + b, 0);
+
+      // console.log('cart', typeof this.totalCart);
+      this.getToken();
+    });
   }
 }
