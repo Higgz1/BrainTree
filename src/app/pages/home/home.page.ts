@@ -41,6 +41,9 @@ export class HomePage implements OnInit {
     // Hide purchase button on page load
     (document.getElementById('purchase') as any).style.visibility = 'hidden';
   }
+  ionViewDidEnter() {
+    this.getToken();
+  }
 
   async getToken() {
     const loading = await this.loadingController.create({
@@ -54,7 +57,6 @@ export class HomePage implements OnInit {
     this.tokenService.getToken().subscribe((token: any) => {
       // console.log(token.clientToken);
       const clientToken = token.clientToken;
-
 
       braintree.dropin
         .create({
@@ -93,7 +95,9 @@ export class HomePage implements OnInit {
             // }
           },
         })
-        .then((dropinInstance) => {
+        .then(async (dropinInstance) => {
+          
+
           loading.dismiss();
 
           dropinInstance.on('changeActiveView', (event) => {
@@ -155,7 +159,7 @@ export class HomePage implements OnInit {
     await loading.present();
 
     // Creating the object to send to the server
-    const payableAmount = this.totalCart;
+    const payableAmount = (this.totalCart.toFixed(2)).toString();
     const nonce = payload.nonce;
     const billing = payload.details;
     const type = payload.type;
@@ -217,7 +221,7 @@ export class HomePage implements OnInit {
   getProducts() {
     this.productService.getProducts().subscribe((products) => {
       this.products = products;
-      console.log('dummy products', this.products);
+      console.table('dummy products', this.products);
 
       // Random products
       this.cart = [
@@ -233,7 +237,7 @@ export class HomePage implements OnInit {
           productName: this.products[1].title,
           price: this.products[1].price,
           quantity: 6,
-          itemTotal: this.products[1].price * 5,
+          itemTotal: this.products[1].price * 6,
         },
         {
           id: this.products[2].id,
@@ -249,7 +253,7 @@ export class HomePage implements OnInit {
         .reduce((a, b) => a + b, 0);
 
       // console.log('cart', typeof this.totalCart);
-      this.getToken();
+      // this.getToken();
     });
   }
 }
